@@ -1,4 +1,5 @@
 export type RiskLevel = "LOW" | "MEDIUM" | "HIGH";
+export type ViewKey = "live" | "alerts" | "conjunctions" | "catalog" | "analytics" | "settings";
 
 export interface Satellite {
   name: string;
@@ -6,6 +7,9 @@ export interface Satellite {
   epoch: string;
   hoursSinceEpoch: number;
   isIndianAsset: boolean;
+  altitudeKm: number;
+  inclinationDeg: number;
+  velocityKms: number;
 }
 
 export interface PositionSeries {

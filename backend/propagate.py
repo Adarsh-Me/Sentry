@@ -50,6 +50,16 @@ def epoch_datetime(satellite: TLESatellite) -> datetime:
     return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
 
 
+def orbit_metadata(satellite: TLESatellite) -> tuple[float, float, float]:
+    """Return current altitude, TLE inclination, and speed in display units."""
+    now = load.timescale().now()
+    state = satellite.satellite.at(now)
+    altitude_km = float(np.linalg.norm(state.position.km) - 6378.137)
+    velocity_kms = float(np.linalg.norm(state.velocity.km_per_s))
+    inclination_deg = float(np.degrees(satellite.satellite.model.inclo))
+    return round(altitude_km, 1), round(inclination_deg, 2), round(velocity_kms, 3)
+
+
 def propagate_satellite(satellite: TLESatellite, times) -> np.ndarray:
     positions = np.asarray(satellite.satellite.at(times).position.km, dtype=float)
     if positions.ndim != 2 or positions.shape[0] != 3:

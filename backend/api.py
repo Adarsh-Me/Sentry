@@ -13,7 +13,7 @@ from skyfield.api import load
 
 from .fetch_tle import cache_age_minutes, cache_is_fresh, cache_to_disk, load_cache, refresh_cache
 from .models import ConjunctionAlert, HealthResponse, PositionSeries, ScreeningRequest, Satellite
-from .propagate import TLESatellite, build_satellites, epoch_datetime, propagate_satellite, refine_closest_approach
+from .propagate import TLESatellite, build_satellites, epoch_datetime, orbit_metadata, propagate_satellite, refine_closest_approach
 from .screen import screen_positions
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -48,11 +48,20 @@ def _iso(value) -> str:
 def _satellite_response(satellite: TLESatellite) -> Satellite:
     epoch = epoch_datetime(satellite)
     hours_since_epoch = (datetime.now(timezone.utc) - epoch).total_seconds() / 3600
-    return Satellite(name=satellite.name, norad_id=satellite.norad_id, tle_line1=satellite.line1, tle_line2=satellite.line2, epoch=epoch, hours_since_epoch=round(hours_since_epoch, 2), is_indian_asset=satellite.is_indian_asset)
+    altitude_km, inclination_deg, velocity_kms = orbit_metadata(satellite)
+    return Satellite(name=satellite.name, norad_id=satellite.norad_id, tle_line1=satellite.line1, tle_line2=satellite.line2, epoch=epoch, hours_since_epoch=round(hours_since_epoch, 2), is_indian_asset=satellite.is_indian_asset, altitude_km=altitude_km, inclination_deg=inclination_deg, velocity_kms=velocity_kms)
+
+
+def _working_set(satellites: list[TLESatellite], group: str) -> list[TLESatellite]:
+    normalized = group.strip().lower()
+    if normalized == "active":
+        return satellites
+    constellation = "oneweb" if normalized == "oneweb" else "starlink"
+    return [satellite for satellite in satellites if constellation in satellite.name.lower() or satellite.is_indian_asset]
 
 
 def _screen(request: ScreeningRequest) -> dict:
-    satellites = _skyfield_satellites()
+    satellites = _working_set(_skyfield_satellites(), request.satellite_group)
     if not satellites:
         raise HTTPException(status_code=503, detail="No valid TLE cache found. Use POST /api/refresh-tle first.")
     timescale = load.timescale()
