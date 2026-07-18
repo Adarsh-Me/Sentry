@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { Html, Line, OrbitControls, Stars } from "@react-three/drei";
 import * as THREE from "three";
@@ -177,6 +177,7 @@ export function OrbitScene() {
   const indianAssets = new Set(satellites.filter((satellite) => satellite.isIndianAsset).map((satellite) => satellite.name));
   const firstIndianAsset = satellites.find((satellite) => satellite.isIndianAsset)?.name;
   const hasLiveTracks = Object.keys(positions).length > 0;
+  const [showGuide, setShowGuide] = useState(true);
   return <div className="orbit-scene">
     <Canvas camera={{ position: [0, 0.35, 3.2], fov: 48 }} gl={{ antialias: true }}>
       <color attach="background" args={["#02070d"]} /><fog attach="fog" args={["#02070d", 5, 10]} />
@@ -188,7 +189,9 @@ export function OrbitScene() {
       {selected && <AlertHighlight alert={selected} positions={positions} />}<CameraFocus alert={selected} positions={positions} />
       <OrbitControls enablePan={false} minDistance={1.3} maxDistance={7} autoRotate={!selected} autoRotateSpeed={0.28} enableDamping dampingFactor={0.04} />
     </Canvas>
-    <div className="scene-hud"><span className="hud-pulse" />LIVE PROPAGATION <b>|</b> ECI FRAME</div><div className="scene-readout"><span>ARGUS / LEO-01</span><small>{hasLiveTracks ? "LIVE STATE VECTOR MODEL" : "REAL EARTH / ORBITAL MODEL"}</small></div>
-    <div className="scene-caption"><span className="legend-dot cyan" />ORBITAL POSITION | ECI KM <span className="legend-dot red" />FLAGGED CONJUNCTION</div><div className="scene-label">ORBITAL MONITORING VIEW<br /><span>DRAG TO ROTATE | SCROLL TO ZOOM</span></div>
+    <div className="scene-hud"><span className="hud-pulse" />{hasLiveTracks ? "LIVE PROPAGATION" : "PROPAGATION PREVIEW"} <b>|</b> ECI FRAME</div><div className="scene-readout"><span>ARGUS / LEO-01</span><small>{hasLiveTracks ? "LIVE STATE VECTOR MODEL" : "PREVIEW: 2 EXAMPLE OBJECTS"}</small></div>
+    {showGuide ? <div className="scene-guide"><div className="scene-guide-head"><span>HOW TO READ THIS VIEW</span><button onClick={() => setShowGuide(false)} aria-label="Close view guide">×</button></div><p><i className="guide-line cyan" /><span><strong>Colored lines</strong><small>Predicted paths satellites follow during the selected window.</small></span></p><p><i className="guide-satellite" /><span><strong>Spacecraft icon</strong><small>One tracked satellite at its current or preview position.</small></span></p><p><i className="guide-dot red" /><span><strong>Red pulse</strong><small>Two objects are predicted to pass closest here.</small></span></p></div> : <button className="guide-reopen" onClick={() => setShowGuide(true)}>HOW TO READ</button>}
+    <div className="propagation-timeline"><div className="timeline-heading"><span>PROPAGATION WINDOW</span><strong>{hasLiveTracks ? "24 HOURS" : "PREVIEW WINDOW"}</strong></div><div className="timeline-track"><span className="timeline-progress" /><i className="timeline-now" /><i className="timeline-marker" /></div><div className="timeline-labels"><span>NOW</span><span>+6H</span><span>+12H</span><span>+24H</span></div></div>
+    <div className="scene-caption"><span className="legend-dot cyan" />PREDICTED ORBIT <span className="legend-dot red" />CLOSE APPROACH</div><div className="scene-label">DRAG TO ROTATE · SCROLL TO ZOOM<br /><span>{hasLiveTracks ? "LIVE CATALOG OBJECTS" : "DEMO OBJECTS ONLY"}</span></div>
   </div>;
 }

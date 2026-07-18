@@ -8,6 +8,9 @@ const mapSatellite = (value: any): Satellite => ({
   epoch: value.epoch,
   hoursSinceEpoch: value.hours_since_epoch,
   isIndianAsset: value.is_indian_asset,
+  altitudeKm: value.altitude_km,
+  inclinationDeg: value.inclination_deg,
+  velocityKms: value.velocity_kms,
 });
 
 const mapAlert = (value: any): ConjunctionAlert => ({
@@ -74,4 +77,14 @@ export async function runScreening(params: ScreeningParams): Promise<ScreeningRe
     positions: mapPositions(value.positions),
     alerts: value.alerts.map(mapAlert),
   };
+}
+
+export async function refreshTle(): Promise<{ stale: boolean }> {
+  const response = await fetch(`${API_BASE}/api/refresh-tle`, { method: "POST" });
+  if (!response.ok) {
+    const detail = await response.json().catch(() => null);
+    throw new Error(detail?.detail ?? "TLE refresh failed");
+  }
+  const value = await response.json();
+  return { stale: Boolean(value.stale) };
 }

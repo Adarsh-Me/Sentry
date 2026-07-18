@@ -16,6 +16,9 @@ class Satellite(BaseModel):
     epoch: datetime
     hours_since_epoch: float
     is_indian_asset: bool
+    altitude_km: float
+    inclination_deg: float
+    velocity_kms: float
 
 
 class PositionSeries(BaseModel):
